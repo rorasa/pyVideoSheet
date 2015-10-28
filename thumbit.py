@@ -31,9 +31,9 @@ class Video:
         return duration
 
     def getFrameAt(self,seektime):
-        hours = seektime // 3600
-        minutes = (seektime % 3600) // 60
-        seconds = seektime % 60
+        hours = int(seektime // 3600)
+        minutes = int((seektime % 3600) // 60)
+        seconds = int(seektime % 60)
         timestring = `hours`+":"+`minutes`+":"+`seconds`
         p = Popen(["ffmpeg","-ss",timestring,"-i",self.filename,"-f","image2","-frames:v","1","-c:v","png","-loglevel","8","-"],stdout=PIPE)
         pout = p.communicate()
@@ -70,6 +70,22 @@ class VidSheet:
         self.maxThumbSize = (220,220)
 
         self.video = video
+
+    def setProperty(self,prop,value):
+        if prop == 'font':
+            self.font = ImageFont.truetype(value[0], value[1])
+        elif prop == 'backgroundColour':
+            self.backgroundColour = value
+        elif prop == 'textColour':
+            self.textColour = value
+        elif prop == 'headerSize':
+            self.headerSize = value
+        elif prop == 'gridColumn':
+            self.gridColumn = value
+        elif prop == 'maxThumbSize':
+            self.maxThumbSize = value
+        else:
+            raise Exception('Invalid VidSheet property')
 
     def makeGrid(self):
         column = self.gridColumn
@@ -115,8 +131,14 @@ class VidSheet:
         self.sheet.paste(self.grid,(0,self.header.height))
         return self.sheet
 
+    def makeSheetByNumber(self,numOfThumbs):
+        interval = (self.video.duration/numOfThumbs)
+        return self.makeSheetByInterval(interval)
+
+
 print("Hi there")
 
 video = Video("in.mp4")
 sheet = VidSheet(video)
-sheet.makeSheetByInterval(5).show()
+sheet.setProperty('textColour',(0,255,0,0))
+sheet.makeSheetByNumber(15).show()

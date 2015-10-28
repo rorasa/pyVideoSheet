@@ -5,90 +5,118 @@ import re
 import os
 from decimal import Decimal
 
-def getThumbnailAt(timestring,filename):
-    p = Popen(["ffmpeg","-ss",timestring,"-i",filename,"-f","image2","-frames:v","1","-c:v","png","-loglevel","8","-"],stdout=PIPE)
-    pout = p.communicate()
-    img = Image.open(StringIO.StringIO(pout[0]))
-    return img
+class Video:
+    def __init__(self,filename):
+        self.filename = filename
+        self.filesize = self.getFileSize()
+        example = self.getFrameAt(0)
+        self.resolution = example.size
+        self.mode = example.mode
+        self.duration = self.getVideoDuration()
+        self.thumbnails = []
+        self.thumbsize = self.resolution
+        self.thumbcount = 0
 
-def getThumbnalsInterval(filename,interval):
-    totalThumbs = getVideoDuration(filename)//interval
-    imageList = []
-    seektime = 0
-    for n in range(0,totalThumbs):
-        seektime += interval
+    def getFileSize(self):
+        return os.stat(self.filename).st_size / 1048576.0
+
+    def getVideoDuration(self):
+        p = Popen(["ffmpeg","-i",self.filename],stdout=PIPE, stderr=STDOUT)
+        pout = p.communicate()
+        matches = re.search(r"Duration:\s{1}(?P<hours>\d+?):(?P<minutes>\d+?):(?P<seconds>\d+\.\d+?),", pout[0], re.DOTALL).groupdict()
+        hours = Decimal(matches['hours'])
+        minutes = Decimal(matches['minutes'])
+        seconds = Decimal(matches['seconds'])
+        duration= 3600*hours + 60*minutes + seconds
+        return duration
+
+    def getFrameAt(self,seektime):
         hours = seektime // 3600
         minutes = (seektime % 3600) // 60
         seconds = seektime % 60
         timestring = `hours`+":"+`minutes`+":"+`seconds`
-        img = getThumbnailAt(timestring,filename)
-        imageList.append(img)
-    return imageList
+        p = Popen(["ffmpeg","-ss",timestring,"-i",self.filename,"-f","image2","-frames:v","1","-c:v","png","-loglevel","8","-"],stdout=PIPE)
+        pout = p.communicate()
+        img = Image.open(StringIO.StringIO(pout[0]))
+        return img
 
-def getVideoDuration(filename):
-    # p = Popen(["ffmpeg","-i",filename,"2>&1","|","awk","'/Duration/ {split($2,a,\":\");print a[1]*3600+a[2]*60+a[3]}'"],stdout=PIPE)
-    p = Popen(["ffmpeg","-i",filename],stdout=PIPE, stderr=STDOUT)
-    pout = p.communicate()
-    matches = re.search(r"Duration:\s{1}(?P<hours>\d+?):(?P<minutes>\d+?):(?P<seconds>\d+\.\d+?),", pout[0], re.DOTALL).groupdict()
-    hours = Decimal(matches['hours'])
-    minutes = Decimal(matches['minutes'])
-    seconds = Decimal(matches['seconds'])
-    duration= 3600*hours + 60*minutes + seconds
-    return duration
+    def makeThumbnails(self,interval):
+        totalThumbs = self.duration//interval
+        thumbsList = []
+        seektime = 0
+        for n in range(0,totalThumbs):
+            seektime += interval
+            img = self.getFrameAt(seektime)
+            thumbsList.append(img)
+        self.thumbnails = thumbsList
+        self.thumbcount = len(thumbsList)
+        return thumbsList
 
-def shrinkThumbs(imageList,maxsize):
-    totalThumbs = len(imageList)
-    for i in range(0, totalThumbs):
-        imageList[i].thumbnail(maxsize)
-    return imageList
+    def shrinkThumbs(self,maxsize):
+        if self.thumbcount==0:
+            return
+        for i in range(0, self.thumbcount):
+            self.thumbnails[i].thumbnail(maxsize)
+        self.thumbsize = self.thumbnails[0].size
+        return self.thumbnails
 
-def makeGrid(imageList,column):
-    totalThumbs = len(imageList)
-    row = (totalThumbs//column)
-    if (totalThumbs % column) > 0:
-        row += 1
-    width = imageList[0].width
-    height = imageList[0].height
-    sheet = Image.new(imageList[0].mode,(width*column,height*row))
-    for i in range(0,column):
-        for j in range(0,row):
-            if j*column+i >= totalThumbs:
-                break
-            sheet.paste(imageList[j*column+i],(width*i,height*j))
-    return sheet
+class VidSheet:
+    def __init__(self, video):
+        self.font = ImageFont.truetype('Cabin-Regular-TTF.ttf', 15)
+        self.backgroundColour = (0,0,0,0)
+        self.textColour = (255,255,255,0)
+        self.headerSize = 100
+        self.gridColumn = 5
+        self.maxThumbSize = (220,220)
 
-def makeHeader(filename,grid,resolution):
-    filesize = os.stat(filename).st_size / 1048576.0
-    width = resolution[0]
-    height = resolution[1]
-    duration = getVideoDuration(filename)
-    hours = duration // 3600
-    minutes = (duration % 3600) // 60
-    seconds = duration % 60
-    timestring = ("{:4n}".format(hours))+":"+("{:2n}".format(minutes))+":"+("{:2n}".format(seconds))
+        self.video = video
 
-    fnt = ImageFont.truetype('Cabin-Regular-TTF.ttf', 15)
-    header = Image.new(grid.mode, (grid.width,100), (0,0,0,0))
-    d = ImageDraw.Draw(header)
-    d.text((10,10), "File Name: "+filename, font=fnt,fill=(255,255,255,0))
-    d.text((10,30), "File Size: "+("{:10.6f}".format(filesize))+" MB", font=fnt,fill=(255,255,255,0))
-    d.text((10,50), "Resolution: "+`width`+"x"+`height`, font=fnt,fill=(255,255,255,0))
-    d.text((10,70), "Duration: "+timestring, font=fnt,fill=(255,255,255,0))
-    return header
+    def makeGrid(self):
+        column = self.gridColumn
+        row = self.video.thumbcount//column
+        if (self.video.thumbcount % column) > 0:
+            row += 1
+        width = self.video.thumbsize[0]
+        height = self.video.thumbsize[1]
+        grid = Image.new(self.video.mode,(width*column,height*row))
+        for i in range(0,column):
+            for j in range(0,row):
+                if j*column+i >= self.video.thumbcount:
+                    break
+                grid.paste(self.video.thumbnails[j*column+i],(width*i,height*j))
+        self.grid = grid
+        return grid
 
-def makeSheetInterval(filename, interval, maxsize):
-    thumbsList = getThumbnalsInterval(filename,interval)
-    resol = thumbsList[0].size
-    thumbsList = shrinkThumbs(thumbsList,maxsize)
-    column = 5
-    grid = makeGrid(thumbsList,column)
-    header = makeHeader(filename,grid,resol)
-    sheet = Image.new(grid.mode,(grid.width,grid.height+header.height))
-    sheet.paste(header,(0,0))
-    sheet.paste(grid,(0,header.height))
-    sheet.show()
-    print(thumbsList[0].mode)
+    def makeHeader(self):
+        width = self.video.resolution[0]
+        height = self.video.resolution[1]
+        duration = self.video.duration
+        hours = duration // 3600
+        minutes = (duration % 3600) // 60
+        seconds = duration % 60
+        timestring = ("{:4n}".format(hours))+":"+("{:2n}".format(minutes))+":"+("{:2n}".format(seconds))
+
+        header = Image.new(self.grid.mode, (self.grid.width,self.headerSize), self.backgroundColour)
+        d = ImageDraw.Draw(header)
+        d.text((10,10), "File Name: "+self.video.filename, font=self.font,fill=self.textColour)
+        d.text((10,30), "File Size: "+("{:10.6f}".format(self.video.filesize))+" MB", font=self.font,fill=self.textColour)
+        d.text((10,50), "Resolution: "+`width`+"x"+`height`, font=self.font,fill=self.textColour)
+        d.text((10,70), "Duration: "+timestring, font=self.font,fill=self.textColour)
+        self.header = header
+        return header
+
+    def makeSheetByInterval(self,interval):
+        self.video.makeThumbnails(interval)
+        self.video.shrinkThumbs(self.maxThumbSize)
+        self.makeGrid()
+        self.makeHeader()
+        self.sheet = Image.new(self.grid.mode,(self.grid.width,self.grid.height+self.header.height))
+        self.sheet.paste(self.header,(0,0))
+        self.sheet.paste(self.grid,(0,self.header.height))
+        return self.sheet
 
 print("Hi there")
 
-makeSheetInterval("in.mp4",5,(220,220))
+video = Video("in.mp4")
+sheet = VidSheet(video)
+sheet.makeSheetByInterval(5).show()

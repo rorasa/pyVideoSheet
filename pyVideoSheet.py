@@ -66,7 +66,7 @@ class Video:
         timestring = `hours`+":"+`minutes`+":"+`seconds`
         return timestring
 
-class VidSheet:
+class VideoSheet:
     def __init__(self, video):
         self.font = ImageFont.truetype('Cabin-Regular-TTF.ttf', 15)
         self.backgroundColour = (0,0,0,0)
@@ -94,7 +94,7 @@ class VidSheet:
         elif prop == 'timestamp':
             self.timestamp = value
         else:
-            raise Exception('Invalid VidSheet property')
+            raise Exception('Invalid VideoSheet property')
 
     def makeGrid(self):
         column = self.gridColumn
@@ -168,7 +168,7 @@ parser.add_argument('--preview', action='count', help='Preview the result contac
 args = parser.parse_args()
 
 video = Video(args.filename)
-sheet = VidSheet(video)
+sheet = VideoSheet(video)
 
 count = 20
 mode = 'number'

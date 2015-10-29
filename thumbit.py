@@ -33,10 +33,7 @@ class Video:
         return duration
 
     def getFrameAt(self,seektime):
-        hours = int(seektime // 3600)
-        minutes = int((seektime % 3600) // 60)
-        seconds = int(seektime % 60)
-        timestring = `hours`+":"+`minutes`+":"+`seconds`
+        timestring = self.getTimeString(seektime)
         p = Popen(["ffmpeg","-ss",timestring,"-i",self.filename,"-f","image2","-frames:v","1","-c:v","png","-loglevel","8","-"],stdout=PIPE)
         pout = p.communicate()
         img = Image.open(StringIO.StringIO(pout[0]))
@@ -62,6 +59,13 @@ class Video:
         self.thumbsize = self.thumbnails[0].size
         return self.thumbnails
 
+    def getTimeString(self,seconds):
+        hours = int(seconds // 3600)
+        minutes = int((seconds % 3600) // 60)
+        seconds = int(seconds % 60)
+        timestring = `hours`+":"+`minutes`+":"+`seconds`
+        return timestring
+
 class VidSheet:
     def __init__(self, video):
         self.font = ImageFont.truetype('Cabin-Regular-TTF.ttf', 15)
@@ -70,6 +74,7 @@ class VidSheet:
         self.headerSize = 100
         self.gridColumn = 5
         self.maxThumbSize = (220,220)
+        self.timestamp = True
 
         self.video = video
 
@@ -86,6 +91,8 @@ class VidSheet:
             self.gridColumn = value
         elif prop == 'maxThumbSize':
             self.maxThumbSize = value
+        elif prop == 'timestamp':
+            self.timestamp = value
         else:
             raise Exception('Invalid VidSheet property')
 
@@ -97,11 +104,17 @@ class VidSheet:
         width = self.video.thumbsize[0]
         height = self.video.thumbsize[1]
         grid = Image.new(self.video.mode,(width*column,height*row))
-        for i in range(0,column):
-            for j in range(0,row):
+        d = ImageDraw.Draw(grid)
+        seektime = 0
+        for j in range(0,row):
+            for i in range(0,column):
                 if j*column+i >= self.video.thumbcount:
                     break
                 grid.paste(self.video.thumbnails[j*column+i],(width*i,height*j))
+                if self.timestamp==True:
+                    seektime += self.vid_interval
+                    ts = self.video.getTimeString(seektime)
+                    d.text((width*i,height*j),ts,font=self.font,fill=self.textColour)
         self.grid = grid
         return grid
 
@@ -124,6 +137,7 @@ class VidSheet:
         return header
 
     def makeSheetByInterval(self,interval):
+        self.vid_interval = interval
         self.video.makeThumbnails(interval)
         self.video.shrinkThumbs(self.maxThumbSize)
         self.makeGrid()
@@ -135,6 +149,7 @@ class VidSheet:
 
     def makeSheetByNumber(self,numOfThumbs):
         interval = (self.video.duration/numOfThumbs)
+        self.vid_interval = interval
         return self.makeSheetByInterval(interval)
 
 parser = argparse.ArgumentParser(description='Create thumbnail contact sheet from a video.')
@@ -143,6 +158,7 @@ parser.add_argument('--output','-o',default=None, metavar='<output_file>',help='
 parser.add_argument('--interval', '-i', type=int, default=None, metavar='<sec>',help='Create thumnnails at fixed interval. Each thumbnail is <sec> seconds apart.')
 parser.add_argument('--number', '-n', type=int, default=None, metavar='<num>',help='Create total of <num> thumbnails. Each thumbnail is at equidistant apart.')
 parser.add_argument('--column','-c',type=int,default=None, metavar='<num>', help='Specify number of column of thumbnail sheet.')
+parser.add_argument('--notime', action='count', help='Remove thumbnail timestamp.')
 parser.add_argument('--header',type=int,default=None, metavar='<size>', help='Specify height of description header.')
 parser.add_argument('--thumbsize','-t', nargs=2,type=int,default=None, metavar=('<width>','<height>'), help='Specify maximum size of a thumbnail. The thumbnails will keep its aspect ratio unchanged.')
 parser.add_argument('--textcolour',nargs=4,type=int,default=None, metavar=('<r>','<g>','<b>','<a>'), help='Specify text colour of description. Colour is specify in RGBA format.')
@@ -172,6 +188,8 @@ if args.header != None:
     if c<85:
         c=85
     sheet.setProperty('headerSize',c)
+if args.notime != None:
+    sheet.setProperty('timestamp',False)
 if args.thumbsize != None:
     thumbsize = (args.thumbsize[0],args.thumbsize[1])
     sheet.setProperty('maxThumbSize',thumbsize)

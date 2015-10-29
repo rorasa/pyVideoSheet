@@ -116,7 +116,7 @@ class VidSheet:
 
         header = Image.new(self.grid.mode, (self.grid.width,self.headerSize), self.backgroundColour)
         d = ImageDraw.Draw(header)
-        d.text((10,10), "File Name: "+self.video.filename, font=self.font,fill=self.textColour)
+        d.text((10,10), "File Name: "+os.path.basename(self.video.filename), font=self.font,fill=self.textColour)
         d.text((10,30), "File Size: "+("{:10.6f}".format(self.video.filesize))+" MB", font=self.font,fill=self.textColour)
         d.text((10,50), "Resolution: "+`width`+"x"+`height`, font=self.font,fill=self.textColour)
         d.text((10,70), "Duration: "+timestring, font=self.font,fill=self.textColour)
@@ -137,8 +137,6 @@ class VidSheet:
         interval = (self.video.duration/numOfThumbs)
         return self.makeSheetByInterval(interval)
 
-print("Hi there")
-
 parser = argparse.ArgumentParser(description='Create thumbnail contact sheet from a video.')
 parser.add_argument('filename',help='Input video filename.')
 parser.add_argument('--output','-o',default=None, metavar='<output_file>',help='Specift output video filename.')
@@ -152,7 +150,6 @@ parser.add_argument('--bgcolour',nargs=4,type=int,default=None, metavar=('<r>','
 parser.add_argument('--font',nargs=2,default=None, metavar=('<fontfile>','<size>'), help='Specify font of description. Any truetype font are supported.')
 parser.add_argument('--preview', action='count', help='Preview the result contact sheet.')
 args = parser.parse_args()
-print(args)
 
 video = Video(args.filename)
 sheet = VidSheet(video)
@@ -185,7 +182,7 @@ if args.bgcolour != None:
     colour = (args.bgcolour[0],args.bgcolour[1],args.bgcolour[2],args.bgcolour[3])
     sheet.setProperty('backgroundColour',colour)
 if args.font != None:
-    font = (args.font[0],args.font[1])
+    font = (args.font[0],int(args.font[1]))
     sheet.setProperty('font',font)
 
 if mode=='number':

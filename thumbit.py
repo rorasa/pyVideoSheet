@@ -141,6 +141,7 @@ print("Hi there")
 
 parser = argparse.ArgumentParser(description='Create thumbnail contact sheet from a video.')
 parser.add_argument('filename',help='Input video filename.')
+parser.add_argument('--output','-o',default=None, metavar='<output_file>',help='Specift output video filename.')
 parser.add_argument('--interval', '-i', type=int, default=None, metavar='<sec>',help='Create thumnnails at fixed interval. Each thumbnail is <sec> seconds apart.')
 parser.add_argument('--number', '-n', type=int, default=None, metavar='<num>',help='Create total of <num> thumbnails. Each thumbnail is at equidistant apart.')
 parser.add_argument('--column','-c',type=int,default=None, metavar='<num>', help='Specify number of column of thumbnail sheet.')
@@ -149,6 +150,7 @@ parser.add_argument('--thumbsize','-t', nargs=2,type=int,default=None, metavar=(
 parser.add_argument('--textcolour',nargs=4,type=int,default=None, metavar=('<r>','<g>','<b>','<a>'), help='Specify text colour of description. Colour is specify in RGBA format.')
 parser.add_argument('--bgcolour',nargs=4,type=int,default=None, metavar=('<r>','<g>','<b>','<a>'), help='Specify background colour of contact sheet. Colour is specify in RGBA format.')
 parser.add_argument('--font',nargs=2,default=None, metavar=('<fontfile>','<size>'), help='Specify font of description. Any truetype font are supported.')
+parser.add_argument('--preview', action='count', help='Preview the result contact sheet.')
 args = parser.parse_args()
 print(args)
 
@@ -187,6 +189,14 @@ if args.font != None:
     sheet.setProperty('font',font)
 
 if mode=='number':
-    sheet.makeSheetByNumber(count).show()
+    sheet.makeSheetByNumber(count)
 else:
-    sheet.makeSheetByInterval(count).show()
+    sheet.makeSheetByInterval(count)
+
+if args.output != None:
+    sheet.sheet.save(args.output)
+else:
+    sheet.sheet.save(args.filename[:-3]+'png')
+
+if args.preview != None:
+    sheet.sheet.show()

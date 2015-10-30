@@ -3,7 +3,6 @@ from PIL import Image, ImageDraw, ImageFont
 import StringIO
 import re
 import os
-import sys
 import argparse
 from decimal import Decimal
 

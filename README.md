@@ -63,14 +63,17 @@ If you can see FFmpeg's help, it should work alright. Otherwise please check how
 ## Using pyVideoSheet as a standalone application
 
 pyVideoSheet can be used as a command-line application. This provides a quick and easy way to create contact sheets.
-The best thing about being a command-line application, as opposed to a GUI one, is the ease of writing a batch script for it, 
-especially when one has to work with lots of videos. 
+The best thing about being a command-line application, as opposed to a GUI one, is the ease of writing a batch script for it, especially when one has to work with lots of videos. 
 
-Example of how to create a contact sheet for a video, run this command
+Let's see how to create a contact sheet for a video.
+In this readme we're going to make contact sheets for this lovely creative common film [**Big Buck Bunny**](https://peach.blender.org/) by [Peach project](https://peach.blender.org/).
+To make a contact sheet, run this command
 ```
-python -m pyVideoSheet.create video-file.mp4
+python -m pyVideoSheet.create Big_Buck_Bunny_1080p.avi
 ```
-This executes *create* utility of pyVideoSheet to create a contact sheet for *video-file.mp4* named *video-file.png*, using default options.
+and you should get this result.
+![example sheet](https://raw.githubusercontent.com/rorasa/pyVideoSheet/master/examples/Big_Buck_Bunny_1080p.png)
+This executes *create* utility of pyVideoSheet to create a contact sheet with the same name as our video using default options.
 Customisation options can be added using optional flags.
 
 There are many customisation options, as follows:
@@ -99,18 +102,19 @@ First example shows how to create a simple contact sheet for *video-name.mp4*
 ```python
 import pyVideoSheet as pvs
 
-vid = pvs.Video("video-name.mp4")
+vid = pvs.Video("Big_Buck_Bunny_1080p.avi")
 vsheet = pvs.Sheet(vid)
 vsheet.makeSheetByNumber(20)
-vsheet.sheet.save("sheet.png")
+vsheet.sheet.save("code_example.png")
 ```
 This results in a default contact sheet. 
+![code example png](https://raw.githubusercontent.com/rorasa/pyVideoSheet/master/examples/code_example.png)
 
 The next example shows the full customisation capability of pyVideoSheet.
 ```python
 import pyVideoSheet as pvs
 
-vid = pvs.Video("video-name.mp4") # create Video object
+vid = pvs.Video("Big_Buck_Bunny_1080p.avi") # create Video object
 vidLength = vid.getVideoDuration() # get video duration in seconds
 
 # create a 5x6 grid contact sheet with blue text without timestamp
@@ -136,6 +140,13 @@ sheet_2.show()
 
 vsheet2.sheet.save('column_example.png') # save with PIL save()
 ```
+This is our sheet_1 "grid_example.png"
+![grid example png](https://raw.githubusercontent.com/rorasa/pyVideoSheet/master/examples/grid_example.png)
+
+And this is our sheet_2 "column_example.png"
+
+![column example png](https://raw.githubusercontent.com/rorasa/pyVideoSheet/master/examples/column_example.png)
+
 
 ### Video class
 

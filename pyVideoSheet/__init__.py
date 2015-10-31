@@ -66,7 +66,8 @@ class Video:
 
 class Sheet:
     def __init__(self, video):
-        self.font = ImageFont.truetype('Cabin-Regular-TTF.ttf', 15)
+        fontfile =os.path.dirname( __file__)+'/Cabin-Regular-TTF.ttf'
+        self.font = ImageFont.truetype(fontfile, 15)
         self.backgroundColour = (0,0,0,0)
         self.textColour = (255,255,255,0)
         self.headerSize = 100

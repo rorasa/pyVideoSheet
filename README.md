@@ -2,7 +2,9 @@
 Python video thumbnail contact sheet creator.
 
 pyVideoSheet is designed for efficiency and simplicity, allowing users to create video contact sheets rapidly.
-pyVideoSheet can be used as a standalong command-line application and as an includable package.
+pyVideoSheet can be used as a standalong command-line application and as an importable package.
+
+![title](https://raw.githubusercontent.com/rorasa/pyVideoSheet/master/examples/small_example.png)
 
 ## Dependencies
 
@@ -98,7 +100,7 @@ Options | Example | Description
 pyVideoSheet can be imported into any Python project, allowing a quick and flexible way to create a video contact sheet programatically.
 
 ### Examples
-First example shows how to create a simple contact sheet for *video-name.mp4*
+First example shows how to create a simple contact sheet for *Big_Buck_Bunny_1080p.avi*
 ```python
 import pyVideoSheet as pvs
 
@@ -232,7 +234,7 @@ Each thumbnail is created at the interval defined by the video duration divided 
 - **Parameter**: **number**—a number of thumbnails.
 - **Return**: A PIL Image object.
 
-## Supporting formats
+## Supported formats
 
 pyVideoSheet works based upon PIL and FFmpeg, thus the supporting formats are set by these dependencies.
 Most commonly used video formats (such as mp4, avi, mov *etc.*) should work with FFmpeg, thus should work with pyVideoSheet.

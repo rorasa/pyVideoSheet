@@ -1,3 +1,14 @@
+# pyVideoSheet
+# A Python script for creating video thumbnail contact sheet.
+#
+# This script is a legacy version. It can be run directly from command-line from
+# the same directory this script resides. It can also be imported as a module,
+# given that this script and its default font are present within Python search path.
+# Run python pyVideoSheet --help for how to use it.
+#
+# Writen by Wattanit Hotrakool
+# url: https://github.com/rorasa/pyVideoSheet
+
 from subprocess import Popen, PIPE, STDOUT
 from PIL import Image, ImageDraw, ImageFont
 import StringIO

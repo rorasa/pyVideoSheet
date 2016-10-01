@@ -34,7 +34,10 @@ class Video:
         timestring = self.getTimeString(seektime)
         p = Popen(["ffmpeg","-ss",timestring,"-i",self.filename,"-f","image2","-frames:v","1","-c:v","png","-loglevel","8","-"],stdout=PIPE)
         pout = p.communicate()
-        img = Image.open(StringIO.StringIO(pout[0]))
+        try:
+            img = Image.open(StringIO.StringIO(pout[0]))
+        except IOError:
+            return None
         return img
 
     def makeThumbnails(self,interval):
@@ -44,7 +47,8 @@ class Video:
         for n in range(0,totalThumbs):
             seektime += interval
             img = self.getFrameAt(seektime)
-            thumbsList.append(img)
+            if img!=None:
+                thumbsList.append(img)
         self.thumbnails = thumbsList
         self.thumbcount = len(thumbsList)
         return thumbsList

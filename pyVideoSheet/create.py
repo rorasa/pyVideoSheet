@@ -61,7 +61,7 @@ if __name__ == "__main__":
     if args.output != None:
         sheet.sheet.save(args.output)
     else:
-        sheet.sheet.save(args.filename[:-3]+'png')
+        sheet.sheet.save(args.filename[:-3]+'jpg')
 
     if args.preview != None:
         sheet.sheet.show()
